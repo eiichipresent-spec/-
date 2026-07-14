@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>売上帳</title>
+<meta name="theme-color" content="#26324a">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="売上帳">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#F7F3EA;
+    --surface:#FFFFFF;
+    --ink:#26324a;
+    --ink-soft:#4b566e;
+    --accent:#b0413e;
+    --muted:#8a8371;
+    --line:#dcd4c0;
+    --good:#4c6b52;
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  body{
+    margin:0;
+    background:var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(38,50,74,0.035) 0px, rgba(38,50,74,0.035) 1px, transparent 1px, transparent 28px);
+    color:var(--ink);
+    font-family:'Zen Kaku Gothic New', 'Hiragino Kaku Gothic ProN', sans-serif;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+    padding-top:env(safe-area-inset-top);
+    padding-bottom:env(safe-area-inset-bottom);
+  }
+  .wrap{
+    max-width:720px;
+    margin:0 auto;
+    padding:28px 18px 60px;
+  }
+  header{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    border-bottom:2px solid var(--ink);
+    padding-bottom:14px;
+    margin-bottom:22px;
+  }
+  header h1{
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:28px;
+    letter-spacing:0.08em;
+    margin:0;
+  }
+  header .sub{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.15em;
+  }
+  .card{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 1px 3px rgba(38,50,74,0.05);
+  }
+  .card h2{
+    font-family:'Shippori Mincho', serif;
+    font-size:15px;
+    font-weight:700;
+    margin:0 0 16px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--ink);
+  }
+  .card h2::before{
+    content:'';
+    width:4px;
+    height:14px;
+    background:var(--accent);
+    display:inline-block;
+  }
+  .card.expense h2::before{ background:var(--ink-soft); }
+  .row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+    margin-bottom:12px;
+  }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field.full{ grid-column:1 / -1; }
+  label{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.05em;
+  }
+  select, input{
+    font-family:inherit;
+    font-size:16px;
+    padding:10px 10px;
+    border:1px solid var(--line);
+    border-radius:3px;
+    background:var(--paper);
+    color:var(--ink);
+    width:100%;
+  }
+  select:focus, input:focus{
+    outline:2px solid var(--accent);
+    outline-offset:1px;
+  }
+  .preview{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    background:var(--paper);
+    border:1px dashed var(--line);
+    border-radius:3px;
+    padding:12px 14px;
+    margin-bottom:14px;
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .preview .amt{
+    font-family:'Shippori Mincho', serif;
+    font-size:20px;
+    font-weight:700;
+    color:var(--ink);
+    font-variant-numeric: tabular-nums;
+  }
+  button{
+    font-family:'Zen Kaku Gothic New', sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.05em;
+    padding:13px 18px;
+    border:none;
+    border-radius:3px;
+    background:var(--ink);
+    color:var(--paper);
+    cursor:pointer;
+    width:100%;
+    transition:opacity .15s;
+  }
+  button.expense-btn{ background:var(--ink-soft); }
+  button:hover{ opacity:0.85; }
+  button:active{ opacity:0.7; }
+  .month-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .month-nav button.nav{
+    width:auto;
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+    padding:8px 12px;
+    font-size:16px;
+  }
+  .month-label{
+    font-family:'Shippori Mincho', serif;
+    font-size:18px;
+    font-weight:700;
+    letter-spacing:0.06em;
+  }
+  .summary-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .summary-box{
+    background:var(--paper);
+    border:1px solid var(--line);
+    border-radius:3px;
+    padding:12px 14px;
+  }
+  .summary-box .label{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.1em;
+    margin-bottom:4px;
+  }
+  .summary-box .value{
+    font-family:'Shippori Mincho', serif;
+    font-size:20px;
+    font-weight:700;
+    font-variant-numeric: tabular-nums;
+  }
+  .summary-box.sales .value{ color:var(--ink); }
+  .summary-box.expense .value{ color:var(--ink-soft); }
+  .stamp-row{
+    display:flex;
+    align-items:center;
+    gap:18px;
+    padding:14px 4px 20px;
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    margin-bottom:16px;
+  }
+  .stamp{
+    flex-shrink:0;
+    width:66px;
+    height:66px;
+    border:2.5px solid var(--accent);
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--accent);
+    font-family:'Shippori Mincho', serif;
+    font-weight:700;
+    font-size:12px;
+    letter-spacing:0.1em;
+    line-height:1.3;
+    text-align:center;
+    transform:rotate(-6deg);
+    opacity:0.9;
+  }
+  .stamp span{ display:block; }
+  .total-block .label{
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.1em;
+  }
+  .total-block .value{
+    font-family:'Shippori Mincho', serif;
+    font-size:30px;
+    font-weight:700;
+    font-variant-numeric: tabular-nums;
+  }
+  .subhead{
+    font-size:12px;
+    font-weight:700;
+    color:var(--ink-soft);
+    letter-spacing:0.08em;
+    margin:18px 0 8px;
+  }
+  .subhead:first-child{ margin-top:0; }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+  }
+  thead th{
+    text-align:left;
+    font-weight:500;
+    font-size:11px;
+    color:var(--muted);
+    letter-spacing:0.05em;
+    padding:6px 6px;
+    border-bottom:1px solid var(--ink);
+  }
+  tbody td{
+    padding:9px 6px;
+    border-bottom:1px solid var(--line);
+    vertical-align:middle;
+  }
+  tbody tr:hover{ background:rgba(176,65,62,0.04); }
+  .num{ text-align:right; font-variant-numeric: tabular-nums; }
+  .num.plus{ color:var(--ink); }
+  .num.minus{ color:var(--accent); }
+  .tag{
+    display:inline-block;
+    font-size:10px;
+    letter-spacing:0.05em;
+    padding:1px 6px;
+    border-radius:2px;
+    color:var(--muted);
+    border:1px solid var(--line);
+  }
+  .del-btn{
+    width:auto;
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:16px;
+    padding:2px 6px;
+    cursor:pointer;
+  }
+  .del-btn:hover{ color:var(--accent); }
+  .breakdown-row{
+    display:flex;
+    justify-content:space-between;
+    padding:8px 2px;
+    border-bottom:1px solid var(--line);
+    font-size:13px;
+  }
+  .breakdown-row:last-child{ border-bottom:none; }
+  .breakdown-row .name{ color:var(--ink-soft); }
+  .breakdown-row .v{ font-variant-numeric: tabular-nums; font-weight:500; }
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+    padding:24px 0;
+  }
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%) translateY(10px);
+    background:var(--ink);
+    color:var(--paper);
+    padding:10px 18px;
+    border-radius:4px;
+    font-size:13px;
+    opacity:0;
+    transition:opacity .25s, transform .25s;
+    pointer-events:none;
+    z-index:10;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  @media (max-width:420px){
+    .row{ grid-template-columns:1fr; }
+    header h1{ font-size:23px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>売上帳</h1>
+      <div class="sub">DAILY SALES &amp; EXPENSE LEDGER</div>
+    </div>
+  </header>
+
+  <div class="card">
+    <h2>売上を記録する</h2>
+    <div class="row">
+      <div class="field full">
+        <label>日付</label>
+        <input type="date" id="dateInput">
+      </div>
+      <div class="field full">
+        <label>店舗</label>
+        <select id="storeSelect"></select>
+      </div>
+      <div class="field full" id="itemFieldWrap" style="display:none;">
+        <label>品目</label>
+        <select id="itemSelect"></select>
+      </div>
+      <div class="field">
+        <label>数量</label>
+        <input type="number" id="qtyInput" min="0" step="1" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="field">
+        <label>単価</label>
+        <input type="text" id="unitDisplay" disabled>
+      </div>
+    </div>
+    <div class="preview">
+      <span>売上金額</span>
+      <span class="amt" id="amtPreview">¥0</span>
+    </div>
+    <button id="addBtn">記録する</button>
+  </div>
+
+  <div class="card expense">
+    <h2>経費を記録する</h2>
+    <div class="row">
+      <div class="field full">
+        <label>日付</label>
+        <input type="date" id="expDateInput">
+      </div>
+      <div class="field full">
+        <label>科目</label>
+        <select id="expCategorySelect"></select>
+      </div>
+      <div class="field full">
+        <label>金額</label>
+        <input type="number" id="expAmountInput" min="0" step="1" placeholder="0" inputmode="numeric">
+      </div>
+      <div class="field full">
+        <label>メモ（任意）</label>
+        <input type="text" id="expMemoInput" placeholder="例）〇〇スタンドで給油">
+      </div>
+    </div>
+    <button id="addExpBtn" class="expense-btn">記録する</button>
+  </div>
+
+  <div class="card">
+    <h2>月別集計</h2>
+    <div class="month-nav">
+      <button class="nav" id="prevMonth">←</button>
+      <div class="month-label" id="monthLabel"></div>
+      <button class="nav" id="nextMonth">→</button>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-box sales">
+        <div class="label">売上合計</div>
+        <div class="value" id="salesTotal">¥0</div>
+      </div>
+      <div class="summary-box expense">
+        <div class="label">経費合計</div>
+        <div class="value" id="expenseTotal">¥0</div>
+      </div>
+    </div>
+
+    <div class="stamp-row">
+      <div class="stamp"><span>月間</span><span>利益</span></div>
+      <div class="total-block">
+        <div class="label">NET PROFIT</div>
+        <div class="value" id="netTotal">¥0</div>
+      </div>
+    </div>
+
+    <div class="subhead">店舗別内訳（売上）</div>
+    <div id="breakdownWrap"></div>
+
+    <div class="subhead">科目別内訳（経費）</div>
+    <div id="expBreakdownWrap"></div>
+  </div>
+
+  <div class="card">
+    <h2>明細</h2>
+    <div id="entriesWrap"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const STORES = [
+  { name: "マキイ山荘通り店", unit: 800 },
+  { name: "おこぼう庵", unit: 850 },
+  { name: "フクチマルシェメルシー", unit: 850 },
+  { name: "国府の郷", unit: 850 },
+  { name: "四季犀館", unit: 850 },
+  { name: "個人", unit: 1000 },
+  { name: "そして若のたまごかけごはん", items: [
+      { name: "たまごかけごはん", unit: 1000, unitLabel: "1食" },
+      { name: "ドリンク", unit: 500, unitLabel: "1杯" }
+  ]}
+];
+
+// ユーザー指定の科目に、この業態でよく使う科目をいくつか追加しています。
+// 不要なものや他に加えたい科目があれば教えてください。
+const EXPENSE_CATEGORIES = [
+  "ガソリン代",
+  "飼料",
+  "食材費",
+  "消耗品費",
+  "修繕費",
+  "食事代",
+  "交際費",
+  "雑費"
+];
+
+const SALES_KEY = 'uriagecho-entries';
+const EXPENSE_KEY = 'uriagecho-expenses';
+let entries = [];
+let expenses = [];
+let currentMonth = new Date();
+currentMonth.setDate(1);
+
+const $ = id => document.getElementById(id);
+const yen = n => '¥' + Math.round(n).toLocaleString('ja-JP');
+
+function todayStr(){
+  const d = new Date();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+function populateStoreSelect(){
+  const sel = $('storeSelect');
+  sel.innerHTML = STORES.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+  updateItemVisibility();
+}
+
+function populateCategorySelect(){
+  const sel = $('expCategorySelect');
+  sel.innerHTML = EXPENSE_CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function getStore(name){
+  return STORES.find(s => s.name === name);
+}
+
+function updateItemVisibility(){
+  const store = getStore($('storeSelect').value);
+  const wrap = $('itemFieldWrap');
+  if(store.items){
+    wrap.style.display = '';
+    const itemSel = $('itemSelect');
+    itemSel.innerHTML = store.items.map((it,i) => `<option value="${i}">${it.name}（${it.unitLabel}あたり）</option>`).join('');
+  } else {
+    wrap.style.display = 'none';
+  }
+  updateUnitAndPreview();
+}
+
+function currentUnit(){
+  const store = getStore($('storeSelect').value);
+  if(store.items){
+    const idx = parseInt($('itemSelect').value || 0, 10);
+    return store.items[idx].unit;
+  }
+  return store.unit;
+}
+
+function updateUnitAndPreview(){
+  const unit = currentUnit();
+  $('unitDisplay').value = yen(unit);
+  const qty = parseFloat($('qtyInput').value) || 0;
+  $('amtPreview').textContent = yen(qty * unit);
+}
+
+function loadData(){
+  try{
+    const raw = localStorage.getItem(SALES_KEY);
+    entries = raw ? JSON.parse(raw) : [];
+  } catch(e){ entries = []; }
+  try{
+    const raw = localStorage.getItem(EXPENSE_KEY);
+    expenses = raw ? JSON.parse(raw) : [];
+  } catch(e){ expenses = []; }
+}
+
+function saveEntries(){
+  try{ localStorage.setItem(SALES_KEY, JSON.stringify(entries)); }
+  catch(e){ showToast('保存に失敗しました'); }
+}
+
+function saveExpenses(){
+  try{ localStorage.setItem(EXPENSE_KEY, JSON.stringify(expenses)); }
+  catch(e){ showToast('保存に失敗しました'); }
+}
+
+function showToast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=> t.classList.remove('show'), 1800);
+}
+
+function addEntry(){
+  const date = $('dateInput').value || todayStr();
+  const store = getStore($('storeSelect').value);
+  const qty = parseFloat($('qtyInput').value);
+  if(!qty || qty <= 0){
+    showToast('数量を入力してください');
+    return;
+  }
+  let itemName = null, unit;
+  if(store.items){
+    const idx = parseInt($('itemSelect').value || 0, 10);
+    itemName = store.items[idx].name;
+    unit = store.items[idx].unit;
+  } else {
+    unit = store.unit;
+  }
+  const entry = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    date, store: store.name, item: itemName, qty, unit, amount: qty * unit
+  };
+  entries.push(entry);
+  saveEntries();
+  $('qtyInput').value = '';
+  updateUnitAndPreview();
+  renderMonth();
+  showToast('売上を記録しました');
+}
+
+function addExpense(){
+  const date = $('expDateInput').value || todayStr();
+  const category = $('expCategorySelect').value;
+  const amount = parseFloat($('expAmountInput').value);
+  const memo = $('expMemoInput').value.trim();
+  if(!amount || amount <= 0){
+    showToast('金額を入力してください');
+    return;
+  }
+  const exp = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    date, category, memo, amount
+  };
+  expenses.push(exp);
+  saveExpenses();
+  $('expAmountInput').value = '';
+  $('expMemoInput').value = '';
+  renderMonth();
+  showToast('経費を記録しました');
+}
+
+function deleteEntry(id){
+  entries = entries.filter(e => e.id !== id);
+  saveEntries();
+  renderMonth();
+}
+
+function deleteExpense(id){
+  expenses = expenses.filter(e => e.id !== id);
+  saveExpenses();
+  renderMonth();
+}
+
+function monthKey(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function entriesForMonth(d){
+  const key = monthKey(d);
+  return entries.filter(e => e.date.startsWith(key)).sort((a,b)=> a.date.localeCompare(b.date));
+}
+
+function expensesForMonth(d){
+  const key = monthKey(d);
+  return expenses.filter(e => e.date.startsWith(key)).sort((a,b)=> a.date.localeCompare(b.date));
+}
+
+function renderMonth(){
+  $('monthLabel').textContent = `${currentMonth.getFullYear()}年 ${currentMonth.getMonth()+1}月`;
+  const salesList = entriesForMonth(currentMonth);
+  const expList = expensesForMonth(currentMonth);
+  const salesTotal = salesList.reduce((s,e)=> s + e.amount, 0);
+  const expenseTotal = expList.reduce((s,e)=> s + e.amount, 0);
+  const net = salesTotal - expenseTotal;
+
+  $('salesTotal').textContent = yen(salesTotal);
+  $('expenseTotal').textContent = yen(expenseTotal);
+  const netEl = $('netTotal');
+  netEl.textContent = yen(net);
+  netEl.style.color = net < 0 ? 'var(--accent)' : 'var(--ink)';
+
+  // 店舗別内訳
+  const byStore = {};
+  salesList.forEach(e => {
+    const label = e.item ? `${e.store}（${e.item}）` : e.store;
+    byStore[label] = (byStore[label] || 0) + e.amount;
+  });
+  const bWrap = $('breakdownWrap');
+  const storeKeys = Object.keys(byStore);
+  bWrap.innerHTML = storeKeys.length === 0
+    ? '<div class="empty">この月の売上はまだありません</div>'
+    : storeKeys.sort((a,b)=> byStore[b]-byStore[a]).map(k =>
+        `<div class="breakdown-row"><span class="name">${k}</span><span class="v">${yen(byStore[k])}</span></div>`
+      ).join('');
+
+  // 科目別内訳
+  const byCat = {};
+  expList.forEach(e => {
+    byCat[e.category] = (byCat[e.category] || 0) + e.amount;
+  });
+  const ebWrap = $('expBreakdownWrap');
+  const catKeys = Object.keys(byCat);
+  ebWrap.innerHTML = catKeys.length === 0
+    ? '<div class="empty">この月の経費はまだありません</div>'
+    : catKeys.sort((a,b)=> byCat[b]-byCat[a]).map(k =>
+        `<div class="breakdown-row"><span class="name">${k}</span><span class="v">${yen(byCat[k])}</span></div>`
+      ).join('');
+
+  // 明細（売上・経費を統合して日付順）
+  const combined = [
+    ...salesList.map(e => ({...e, type:'sale'})),
+    ...expList.map(e => ({...e, type:'expense'}))
+  ].sort((a,b)=> a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+
+  const eWrap = $('entriesWrap');
+  if(combined.length === 0){
+    eWrap.innerHTML = '<div class="empty">明細はまだありません</div>';
+  } else {
+    const rows = combined.slice().reverse().map(e => {
+      if(e.type === 'sale'){
+        return `
+          <tr>
+            <td>${e.date.slice(5).replace('-','/')}</td>
+            <td><span class="tag">売上</span> ${e.store}${e.item ? '<br><span style="color:var(--muted);font-size:11px;">'+e.item+'</span>' : ''}</td>
+            <td class="num plus">+${yen(e.amount)}</td>
+            <td><button class="del-btn" data-id="${e.id}" data-type="sale" title="削除">✕</button></td>
+          </tr>`;
+      } else {
+        return `
+          <tr>
+            <td>${e.date.slice(5).replace('-','/')}</td>
+            <td><span class="tag">経費</span> ${e.category}${e.memo ? '<br><span style="color:var(--muted);font-size:11px;">'+e.memo+'</span>' : ''}</td>
+            <td class="num minus">-${yen(e.amount)}</td>
+            <td><button class="del-btn" data-id="${e.id}" data-type="expense" title="削除">✕</button></td>
+          </tr>`;
+      }
+    }).join('');
+    eWrap.innerHTML = `
+      <table>
+        <thead>
+          <tr><th>日付</th><th>内容</th><th class="num">金額</th><th></th></tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+    eWrap.querySelectorAll('.del-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.type === 'sale') deleteEntry(btn.dataset.id);
+        else deleteExpense(btn.dataset.id);
+      });
+    });
+  }
+}
+
+function init(){
+  populateStoreSelect();
+  populateCategorySelect();
+  $('dateInput').value = todayStr();
+  $('expDateInput').value = todayStr();
+  $('storeSelect').addEventListener('change', updateItemVisibility);
+  $('itemSelect').addEventListener('change', updateUnitAndPreview);
+  $('qtyInput').addEventListener('input', updateUnitAndPreview);
+  $('addBtn').addEventListener('click', addEntry);
+  $('addExpBtn').addEventListener('click', addExpense);
+  $('prevMonth').addEventListener('click', () => {
+    currentMonth.setMonth(currentMonth.getMonth()-1);
+    renderMonth();
+  });
+  $('nextMonth').addEventListener('click', () => {
+    currentMonth.setMonth(currentMonth.getMonth()+1);
+    renderMonth();
+  });
+  updateUnitAndPreview();
+  loadData();
+  renderMonth();
+}
+
+init();
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(()=>{});
+  });
+}
+</script>
+</body>
+</html>
